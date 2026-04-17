@@ -1,0 +1,127 @@
+####################################################################################
+# 
+# APS Style
+# 
+# Del Mastro Group Publication Style Sheet
+# 
+# Last Updated: May 5th, 2015
+# 
+# NOTES:
+#   - Uncomment lines for non-default values.
+#   - Remember to call the axes command to change the bounding box
+# 
+# CHANGES:
+# 
+# fig_width_pt = 246.0                    # Get this from LaTeX using \showthe\columnwidth
+# inches_per_pt = 1.0/72.27               # Convert pt to inch
+# golden_mean = (sqrt(5.0)-1.0)/2.0       # Aesthetic ratio
+# fig_width = fig_width_pt*inches_per_pt  # width in inches
+# fig_height = fig_width*golden_mean      # height in inches
+# fig_size =  [fig_width,fig_height]
+# aps_fig_size =  [fig_width,fig_height]
+# 
+# aps = {'params': {'axes.labelsize': 10,
+#                   'font.size': 10,
+#                   'legend.fontsize': 10,
+#                   'xtick.labelsize': 8,
+#                   'ytick.labelsize': 8,
+#                   'font.serif': 'CMU Serif Roman',
+#                   'text.usetex': True,
+#                   'figure.figsize': aps_fig_size,
+#                   'xtick.major.size': 4,
+#                   'xtick.minor.size': 2,
+#                   'xtick.major.pad': 4,
+#                   'xtick.minor.pad': 4,
+#                   'ytick.major.size': 4,
+#                   'ytick.minor.size': 2,
+#                   'ytick.major.pad': 4,
+#                   'ytick.minor.pad': 4,
+#                   'legend.frameon': False},
+#                   'axes': [0.15,0.16,0.95-0.11,0.95-0.15]}
+# 
+####################################################################################
+
+### FONT
+font.size           : 9.0
+font.family         : serif
+font.serif          : CMU Serif, DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
+
+text.hinting        : auto
+text.hinting_factor : 8
+
+axes.prop_cycle: cycler('color', ['5E4Fa2', '3C93B8', '79C9A4', 'C2E69F', 'F1F9AA', 'FEEC9F', 'FDBB6C', 'F57949', 'D7414E', '9E0142'])
+
+### LaTeX customizations. See http://www.scipy.org/Wiki/Cookbook/Matplotlib/UsingTex
+text.usetex         : true  # use latex for all text handling. The following fonts
+                              # are supported through the usual rc parameter settings:
+                              # new century schoolbook, bookman, times, palatino,
+                              # zapf chancery, charter, serif, sans-serif, helvetica,
+                              # avant garde, courier, monospace, computer modern roman,
+                              # computer modern sans serif, computer modern typewriter
+                              # If another font is desired which can loaded using the
+                              # LaTeX \usepackage command, please inquire at the
+                              # matplotlib mailing list
+
+
+# undo change to new latex font
+mathtext.fontset    : cm
+mathtext.rm         : serif
+
+text.latex.preamble : \usepackage{siunitx} \usepackage{svrsymbols} \usepackage{amsmath} \sisetup{per-mode=reciprocal}
+
+### AXES
+axes.labelsize      : 8     # fontsize of the x any y labels
+axes.linewidth      : 0.35    # edge linewidth
+axes.labelpad       : 2.0
+axes.labelweight    : light
+#
+#axes.xmargin        : 0       # x margin.  See `axes.Axes.margins`
+#axes.ymargin        : 0 
+
+### LINES
+lines.linewidth     : 1.0
+lines.markeredgewidth: 0.35
+lines.dash_joinstyle : round        # miter|round|bevel
+lines.dash_capstyle : round          # butt|round|projecting
+lines.solid_joinstyle : round       # miter|round|bevel
+lines.solid_capstyle : round        # butt|round|projecting
+lines.markersize    : 2             # default marker size
+
+### ERRORBARS
+errorbar.capsize    : 0
+
+### TICKS
+# see http://matplotlib.org/api/axis_api.html#matplotlib.axis.Tick
+xtick.major.size     : 2      # major tick size in points
+xtick.major.width    : 0.35    # major tick width in points
+xtick.minor.size     : 0      # minor tick size in points
+xtick.major.pad      : 2      # distance to major tick label in points
+xtick.minor.pad      : 2      # distance to the minor tick label in points
+xtick.labelsize      : 8      # fontsize of the tick labels
+
+ytick.major.size     : 2    # major tick size in points
+ytick.major.width    : 0.35    # major tick width in points
+ytick.minor.size     : 0      # minor tick size in points
+ytick.major.pad      : 2      # distance to major tick label in points
+ytick.minor.pad      : 2      # distance to the minor tick label in points
+ytick.labelsize      : 8 # fontsize of the tick labels
+
+### Legend
+legend.fontsize      : 8
+legend.frameon       : False   # whether or not to draw a frame around legend
+legend.handlelength  : 1      # the length of legend lines
+
+### FIGURE
+# See http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure
+figure.figsize   : 3.4646, 2.14122    # figure size in inches (88mm x 88/golden ratio)
+figure.subplot.bottom: 0.05
+figure.subplot.left: 0.05
+figure.subplot.right: 0.95
+figure.subplot.top: 0.92
+
+savefig.transparent :  True     # transparent figures
+savefig.dpi         : 300     # figure dots per inch
+savefig.bbox        : tight     # 'tight' or 'standard'.
+savefig.pad_inches  : 0.005       # Padding to be used when bbox is set to 'tight'
+
+pdf.fonttype       : 42
