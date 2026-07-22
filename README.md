@@ -1,14 +1,14 @@
 [![Paper](https://img.shields.io/badge/paper-arXiv%3AXXXX.YYYYY-B31B1B.svg)](https://arxiv.org/abs/XXXX.YYYYY)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://zenodo.org/badge/latestdoi/XXXXYYYYY)
 
-# Paper Title
+# Particle number fluctuations in one dimensional quantum liquids
 
-Author 1, Author 2, Author 3
+Sutirtha Paul, Matthias Thamm, Rahul Soni, Paul E. Sokol, and Adrian Del Maestro
 
 [arXiv:XXXX.YYYYY](https://arxiv.org/abs/XXXX.YYYYY)
 
 ### Abstract
-Abstract Here
+In quantum many-body systems, the careful treatment of particle number plays a central role in determining the accessible physics.\tdm{I am not so sure what this first sentence is really saying.}  Although the canonical and grand canonical ensembles both describe equilibrium statistical mechanics in the thermodynamic limit, their distinct constraints can lead to meaningful differences in finite systems, especially in one spatial dimension where quantum and thermal fluctuations are enhanced. To probe the interplay between number fluctuations and strong correlations, we analytically compute grand canonical corrections to the density-density (pair) correlation function of a Tomonaga–Luttinger liquid via bosonization. We identify a regime where these corrections are non-negligible and benchmark our findings using both Monte Carlo simulations of one dimensional bosonic quantum liquids and DMRG simulations of spinless fermions hopping on a 1D lattice. Our results show that  there is a measurable difference between the two ensembles in a regime with tunable density. We find that this difference can lead to incorrect extraction of the Luttinger parameters unless proper care is taken with experimental consequences for confined superfluid $^4$He.  
 
 ### Description
 This repository includes links, code, scripts, and data to generate the figures in a paper.
