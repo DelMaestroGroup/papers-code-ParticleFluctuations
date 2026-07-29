@@ -206,6 +206,18 @@ def fitpeaks(xdata,ydata,fitting_form,prominence_frac=0.01,skip=10):
     K_std, v_std = np.sqrt(np.diag(pcov))
     return K,K_std,v_s,v_std
 
+def P(N,K,v,A,L,T,hbar,rho):
+    """
+    P_0(N) = \frac{e^{\frac{-\pi v_N}{2LT}(N - N_0)^2}}{\vartheta_3(0,e^{\frac{-\pi v_N}{2LT}})}
+    """
+    N0 = rho * L
+    vN = v/K
+    num = np.exp(-np.pi * vN * (N - N0)**2 / (2 *L * T))
+    den = mp.jtheta(3, 0, np.exp(-np.pi * vN / (2 * L *T)))
+    return num/den
+    
+
+    
 def extract_oscillation(x, y, a):
     dx = np.mean(np.diff(x))
 
