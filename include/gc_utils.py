@@ -111,12 +111,12 @@ def grandcanonical_osc(x,K,v,A,L,T,rho,hbar,mu):
     system parameters K,v (v_s, sound velocity in the system) ,L,T,hbar, rho and mu
     """
     beta = 1.0/T; 
-    theta3_den = theta3_wrapper(mu, v,beta, hbar, K, L)
+    theta3_den = theta3_wrapper(mu, v,beta, hbar, 1./K, L)
     corr = np.zeros_like(x)
     for i, xv in enumerate(x):
         x_mp = mp.mpf(xv)
         arg_num = -mp.j/2 * (beta*mu + 2*mp.j*mp.pi*x_mp/L)
-        theta3_num = theta3_general(arg_num, mu, v,beta, hbar, K, L)
+        theta3_num = theta3_general(arg_num, mu, v,beta, hbar, 1./K, L)
         pref_ratio = theta3_num / theta3_den
         exp_fact = mp.e**((beta*hbar*mp.pi*v - beta*mu)/(6*L))
         theta1_val = theta1_wrapper(x_mp, mu, v,beta, hbar, L)
