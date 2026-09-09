@@ -88,7 +88,7 @@ def canonical_osc(x,K,v,A,L,T,hbar,rho):
     for i, xv in enumerate(x):
         x_mp = mp.mpf(xv)
         theta1_val = theta1_wrapper(x_mp, 0.0, v, beta, hbar, L)
-        denom = 2*theta1_wrapper_deriv(0.0, 0.0, v, beta, hbar, L, n = 1)
+        denom = np.pi*theta1_wrapper_deriv(0.0, 0.0, v, beta, hbar, L, n = 1)
         bracket = (L * theta1_val) / denom
         bracket_pow = mp.power(mp.fabs(bracket), -2/K)
         fac[i] += A*float(mp.re(bracket_pow))
@@ -199,14 +199,240 @@ def fitpeakswithA(xdata,ydata,fitting_form,prominence_frac=0.01,skip=10):
     """
     yabs = np.abs(ydata)
     prominence = prominence_frac*np.max(yabs)
+
     peaks, properties = find_peaks(yabs, prominence=prominence)
     x_peaks = xdata[peaks][skip:]
     y_peaks = yabs[peaks][skip:]
-    popt, pcov = curve_fit(fitting_form, x_peaks, y_peaks, p0=[0.3,8,1], bounds=([0.01, 0.4,0.00001], [np.inf, np.inf,10]))
+    popt, pcov = curve_fit(fitting_form, x_peaks, y_peaks, p0=[5.2,49.5,1], bounds=([0.01, 0.4,0.00001], [np.inf, np.inf,10]))
     K, v_s, A = popt
-    
+    corr = pcov / np.sqrt(np.outer(np.diag(pcov), np.diag(pcov)))
+    print(corr)
     K_std, v_std, A_std = np.sqrt(np.diag(pcov))
     return K,K_std,v_s,v_std, A, A_std
+
+def fitpeakswithA2(xdata, ydata, prominence_frac=0.01, skip=10):
+    """
+    Extract positive/negative extrema and perform two fits:
+
+    1. Smooth part:
+           S(x) = [g_+(x) + g_-(x)] / 2
+
+       Fit to the smooth canonical finite-L expression to obtain K, v.
+
+    2. Oscillatory envelope:
+           E(x) = [g_+(x) - g_-(x)] / 2
+
+       Fit to A * F(x; K, v), with K and v fixed from fit 1.
+
+    Returns:
+        K, K_std, v_s, v_std, A, A_std
+    """
+    L = 200
+    T = 2
+    rho = 0.25
+    # ---------------------------------------------------------
+    # Find positive and negative peaks
+    # ---------------------------------------------------------
+
+    prominence = prominence_frac * np.max(np.abs(ydata))
+
+    peaks_pos, _ = find_peaks(
+        ydata,
+        prominence=prominence
+    )
+
+    peaks_neg, _ = find_peaks(
+        -ydata,
+        prominence=prominence
+    )
+
+    x_pos = xdata[peaks_pos]
+    y_pos = ydata[peaks_pos]
+
+    x_neg = xdata[peaks_neg]
+    y_neg = ydata[peaks_neg]
+
+    if len(x_pos) == 0 or len(x_neg) == 0:
+        raise RuntimeError("Could not find both positive and negative peaks.")
+
+    # ---------------------------------------------------------
+    # Pair each positive peak with nearest negative peak
+    # ---------------------------------------------------------
+
+    pairs = []
+
+    for xp, yp in zip(x_pos, y_pos):
+
+        idx = np.argmin(np.abs(x_neg - xp))
+
+        xn = x_neg[idx]
+        yn = y_neg[idx]
+
+        pairs.append((xp, yp, xn, yn))
+
+    pairs = np.array(pairs)
+
+    xp = pairs[:, 0]
+    yp = pairs[:, 1]
+
+    xn = pairs[:, 2]
+    yn = pairs[:, 3]
+
+    # Midpoint between extrema
+    x_peaks = 0.5 * (xp + xn)
+
+    # ---------------------------------------------------------
+    # Extract smooth and oscillatory pieces
+    # ---------------------------------------------------------
+
+    # Smooth:
+    #
+    # (g_+ + g_-)/2
+    #
+    smooth = 0.5 * (yp + yn)
+
+    # Oscillatory envelope:
+    #
+    # (g_+ - g_-)/2
+    #
+    envelope = 0.5 * (yp - yn)
+
+    # ---------------------------------------------------------
+    # Remove initial peaks
+    # ---------------------------------------------------------
+
+    x_fit = x_peaks[skip:]
+    smooth_fit = smooth[skip:]
+    envelope_fit = envelope[skip:]
+
+    # ---------------------------------------------------------
+    # Smooth canonical expression
+    # ---------------------------------------------------------
+
+    def canonical_smooth(x, K, v):
+
+        beta = 1.0 / T
+
+        result = np.zeros_like(x, dtype=float)
+
+        for i, xv in enumerate(x):
+
+            x_mp = mp.mpf(xv)
+
+            theta = theta1_wrapper(
+                x_mp, 0.0, v, beta, hbar, L
+            )
+
+            dtheta = theta1_wrapper_deriv(
+                x_mp, 0.0, v, beta, hbar, L, n=1
+            )
+
+            ddtheta = theta1_wrapper_deriv(
+                x_mp, 0.0, v, beta, hbar, L, n=2
+            )
+
+            lnpp = ddtheta / theta - (dtheta / theta)**2
+
+            result[i] = (
+                (1.0 / (2.0 * L**2 * K))
+                * float(mp.re(lnpp))
+                / rho**2
+            )
+
+        return result
+
+    # ---------------------------------------------------------
+    # FIT 1: smooth part -> K, v
+    # ---------------------------------------------------------
+
+    popt_smooth, pcov_smooth = curve_fit(
+        canonical_smooth,
+        x_fit,
+        smooth_fit,
+        p0=[5.2, 49.5],
+        bounds=(
+            [0.01, 0.4],
+            [np.inf, np.inf]
+        )
+    )
+
+    K, v_s = popt_smooth
+
+    K_std, v_std = np.sqrt(np.diag(pcov_smooth))
+
+    # ---------------------------------------------------------
+    # FIT 2: oscillatory envelope -> A
+    # ---------------------------------------------------------
+
+    def canonical_oscillatory(x, A):
+
+        beta = 1.0 / T
+
+        result = np.zeros_like(x, dtype=float)
+
+        for i, xv in enumerate(x):
+
+            x_mp = mp.mpf(xv)
+
+            theta1_val = theta1_wrapper(
+                x_mp, 0.0, v_s, beta, hbar, L
+            )
+
+            denom = (
+                np.pi
+                * theta1_wrapper_deriv(
+                    0.0, 0.0, v_s, beta, hbar, L, n=1
+                )
+            )
+
+            bracket = (L * theta1_val) / denom
+
+            bracket_pow = mp.power(
+                mp.fabs(bracket),
+                -2.0 / K
+            )
+
+            result[i] = (
+                A
+                * float(mp.re(bracket_pow))
+                / rho**2
+            )
+
+        return result
+
+    popt_A, pcov_A = curve_fit(
+        canonical_oscillatory,
+        x_fit,
+        envelope_fit,
+        p0=[1.0],
+        bounds=([0.00001], [10.0])
+    )
+
+    A = popt_A[0]
+    A_std = np.sqrt(pcov_A[0, 0])
+
+    # ---------------------------------------------------------
+    # Print correlation matrix of smooth K,v fit
+    # ---------------------------------------------------------
+
+    corr_smooth = (
+        pcov_smooth
+        / np.sqrt(
+            np.outer(
+                np.diag(pcov_smooth),
+                np.diag(pcov_smooth)
+            )
+        )
+    )
+
+    print("Smooth fit correlation matrix:")
+    print(corr_smooth)
+
+    print("\nK =", K, "+/-", K_std)
+    print("v =", v_s, "+/-", v_std)
+    print("A =", A, "+/-", A_std)
+
+    return K, K_std, v_s, v_std, A, A_std
 
 def P(N,K,v,A,L,T,hbar,rho):
     """
@@ -239,5 +465,50 @@ def extract_oscillation(x, y, a):
 
     return osc, amp, phase
 
+def obdm_bos(x_vals,K,v,A,L,T,rho,hbar):
+    beta = 1.0/T; 
+    corr = np.zeros_like(x_vals)
+    for i, xv in enumerate(x_vals):
+        x_mp = mp.mpf(xv)
+        pref = theta3_general(np.pi*x_mp/L,0.0,v,beta,hbar,K,L)/theta3_general(0,0.0,v,beta,hbar,K,L)
+        theta1_val = theta1_wrapper(x_mp, 0.0, v, beta, hbar, L)
+        denom = np.pi*theta1_wrapper_deriv(0.0, 0.0, v, beta, hbar, L, n = 1)
+        bracket = (L * theta1_val) / denom
+        bracket_pow = mp.power(bracket, -1/(2*K))
+        corr[i] = float(mp.re(pref * bracket_pow))
+    return corr
+
+def obdm_fer_ce(x_vals,K,v,A,L,T,rho,hbar):
+    beta = 1.0/T; 
+    corr = np.zeros_like(x_vals)
+    for i, xv in enumerate(x_vals):
+        x_mp = mp.mpf(xv)
+        pref = theta3_general(np.pi*x_mp/L,0.0,v,beta,hbar,K,L)/theta3_general(0,0.0,v,beta,hbar,K,L)
+        theta1_val = theta1_wrapper(x_mp, 0.0, v, beta, hbar, L)
+        denom = np.pi*theta1_wrapper_deriv(0.0, 0.0, v, beta, hbar, L, n = 1)
+        bracket = (L * theta1_val) / denom
+        bracket_pow = mp.power(bracket, -(1/2)*(K + 1/K))
+        phase_factor = mp.e**(mp.j*mp.pi*rho*x_mp)
+        corr[i] = float(mp.re(pref * phase_factor * bracket_pow))
+    return corr
+
+def obdm_fer_gce(x_vals,K,v,mu,A,L,T,rho,hbar):
+    beta = 1.0/T; 
+    corr = np.zeros_like(x_vals)
+    for i, xv in enumerate(x_vals):
+        x_mp = mp.mpf(xv)
+        pref = theta3_general(np.pi*x_mp/L,0.0,v,beta,hbar,K,L)/theta3_general(0,0.0,v,beta,hbar,K,L)
+        theta3_den = theta3_wrapper(mu, v,beta, hbar, K, L)
+        arg_num = -mp.j/2 * (beta*mu + 2*mp.j*mp.pi*x_mp/L)
+        theta3_num = theta3_general(arg_num, mu, v,beta, hbar, K, L)
+        pref_ratio = theta3_num / theta3_den
+        theta1_val = theta1_wrapper(x_mp, 0.0, v, beta, hbar, L)
+        denom = np.pi*theta1_wrapper_deriv(0.0, 0.0, v, beta, hbar, L, n = 1)
+        bracket = (L * theta1_val) / denom
+        bracket_pow = mp.power(bracket, -(1/2)*(K + 1/K))
+        phase_factor = mp.e**(mp.j*mp.pi*rho*x_mp)
+        corr[i] = float(mp.re(pref_ratio * pref * phase_factor * bracket_pow))
+    return corr
+    
 
 
